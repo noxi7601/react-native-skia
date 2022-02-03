@@ -2,7 +2,19 @@ import type { SkJSIInstance } from "../JsiInstance";
 import type { IPaint } from "../Paint";
 import type { IRect } from "../Rect";
 
+export interface FontMetrics {
+  ascent: number; // suggested space above the baseline. < 0
+  descent: number; // suggested space below the baseline. > 0
+  leading: number; // suggested spacing between descent of previous line and ascent of next line.
+  bounds?: IRect; // smallest rect containing all glyphs (relative to 0,0)
+}
+
 export interface IFont extends SkJSIInstance<"Font"> {
+  /**
+   * Returns the FontMetrics for this font.
+   */
+  getMetrics(): FontMetrics;
+
   /** Get/Sets text size in points.
     Has no effect if textSize is not greater than or equal to zero.
   */

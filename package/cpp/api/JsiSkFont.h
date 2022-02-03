@@ -11,6 +11,7 @@
 #pragma clang diagnostic ignored "-Wdocumentation"
 
 #include <SkFont.h>
+#include <SkFontMetrics.h>
 
 #pragma clang diagnostic pop
 
@@ -31,6 +32,24 @@ public:
   JSI_PROPERTY_GET(size) { return static_cast<double>(getObject()->getSize()); }
   JSI_PROPERTY_SET(size) { getObject()->setSize(value.asNumber()); }
 
+  JSI_HOST_FUNCTION(getMetrics) {
+    SkFontMetrics fm;
+    getObject()->getMetrics(&fm);
+    auto object = jsi::Object(runtime);
+    object.setProperty(runtime, "ascent",  fm.fAscent);
+    object.setProperty(runtime, "descent",  fm.fDescent);
+    object.setProperty(runtime, "leading",  fm.fLeading);
+    if (!(fm.fFlags & SkFontMetrics::kBoundsInvalid_Flag)) {
+      auto bounds = jsi::Object(runtime);
+      bounds.setProperty(runtime, "x", fm.fXMin);
+      bounds.setProperty(runtime, "y", fm.fXMin);
+      bounds.setProperty(runtime, "width", fm.fXMax - fm.fXMin);
+      bounds.setProperty(runtime, "height", fm.fBottom - fm.fTop);
+      object.setProperty(runtime, "bounds",  bounds);
+    }
+    return object;
+  }
+
   JSI_HOST_FUNCTION(measureText) {
     auto textVal = arguments[0].asString(runtime).utf8(runtime);
     auto text = textVal.c_str();
@@ -48,7 +67,7 @@ public:
 
   JSI_EXPORT_PROPERTY_GETTERS(JSI_EXPORT_PROP_GET(JsiSkFont, size), JSI_EXPORT_PROP_GET(JsiSkFont, __typename__))
   JSI_EXPORT_PROPERTY_SETTERS(JSI_EXPORT_PROP_SET(JsiSkFont, size))
-  JSI_EXPORT_FUNCTIONS(JSI_EXPORT_FUNC(JsiSkFont, measureText))
+  JSI_EXPORT_FUNCTIONS(JSI_EXPORT_FUNC(JsiSkFont, measureText), JSI_EXPORT_FUNC(JsiSkFont, getMetrics))
 
   JsiSkFont(std::shared_ptr<RNSkPlatformContext> context, const SkFont &font)
       : JsiSkWrappingSharedPtrHostObject(context,
